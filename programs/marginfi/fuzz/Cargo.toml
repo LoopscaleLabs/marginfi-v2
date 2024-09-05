@@ -19,8 +19,8 @@ solana-program = "=1.18.17"
 solana-program-test = "=1.18.17"
 spl-token = "4.0.0"
 
-anchor-lang = { git = "https://github.com/mrgnlabs/anchor.git", rev = "fdcf299dc55ecf7cfa8c4d598aecb1363b99c02d" }
-anchor-spl = { git = "https://github.com/mrgnlabs/anchor.git", rev = "fdcf299dc55ecf7cfa8c4d598aecb1363b99c02d" }
+anchor-lang = { workspace = true}
+anchor-spl = { workspace = true}
 
 pyth-sdk-solana = "=0.10.1"
 
