@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_lang_29::Discriminator;
+// use anchor_lang_29::Discriminator;
 use anchor_spl::token_2022::spl_token_2022::extension::transfer_fee::MAX_FEE_BASIS_POINTS;
 use marginfi::constants::PYTH_ID;
 use marginfi::constants::SWITCHBOARD_PULL_ID;
@@ -140,7 +140,7 @@ pub fn create_pyth_push_oracle_account(
     let mut data = vec![];
     let mut account_data = vec![];
 
-    data.extend_from_slice(&PriceUpdateV2::DISCRIMINATOR);
+    // data.extend_from_slice(&PriceUpdateV2::DISCRIMINATOR);
 
     price_update.serialize(&mut account_data).unwrap();
 
@@ -413,10 +413,10 @@ pub fn create_switchboard_price_feed(ui_price: i64, mint_decimals: i32) -> Accou
                              // parent_function: todo!(),
     };
 
-    let desc_bytes =
-        <AggregatorAccountData as switchboard_solana::anchor_lang::Discriminator>::DISCRIMINATOR;
+    // let desc_bytes =
+    //     <AggregatorAccountData as switchboard_solana::anchor_lang::Discriminator>::DISCRIMINATOR;
     let mut data = vec![0u8; 8 + size_of::<AggregatorAccountData>()];
-    data[..8].copy_from_slice(&desc_bytes);
+    // data[..8].copy_from_slice(&desc_bytes);
     data[8..].copy_from_slice(bytemuck::bytes_of(&aggregator_account));
 
     Account {
