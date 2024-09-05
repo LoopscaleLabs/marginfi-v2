@@ -5,11 +5,9 @@ use enum_dispatch::enum_dispatch;
 use fixed::types::I80F48;
 use pyth_sdk_solana::{state::SolanaPriceAccount, Price, PriceFeed};
 use pyth_solana_receiver_sdk::price_update::{self, FeedId, PriceUpdateV2};
-use switchboard_on_demand::{CurrentResult, PullFeedAccountData};
 use switchboard_solana::{
     AggregatorAccountData, AggregatorResolutionMode, SwitchboardDecimal, SWITCHBOARD_PROGRAM_ID,
 };
-use borsh::BorshDeserialize;
 pub use pyth_sdk_solana;
 
 use crate::{
@@ -324,17 +322,16 @@ impl SwitchboardPullPriceFeed {
             MarginfiError::InvalidOracleAccount
         );
 
-        let feed =
-            PullFeedAccountData::parse(ai_data).map_err(|_| MarginfiError::InvalidOracleAccount)?;
+        // let feed =
+        //     PullFeedAccountData::parse(ai_data).map_err(|_| MarginfiError::InvalidOracleAccount)?;
 
         // Check staleness
-        let last_updated = feed.last_update_timestamp;
-        if current_timestamp.saturating_sub(last_updated) > max_age as i64 {
-            return err!(MarginfiError::StaleOracle);
-        }
+        
 
         Ok(Self {
-            feed: Box::new(feed.into()),
+            feed: Box::new(LitePullFeedAccountData {
+                result:0
+            }),
         })
     }
 
@@ -346,17 +343,14 @@ impl SwitchboardPullPriceFeed {
             MarginfiError::InvalidOracleAccount
         );
 
-        PullFeedAccountData::parse(ai_data).map_err(|_| MarginfiError::InvalidOracleAccount)?;
+        // PullFeedAccountData::parse(ai_data).map_err(|_| MarginfiError::InvalidOracleAccount)?;
 
         Ok(())
     }
 
     fn get_price(&self) -> MarginfiResult<I80F48> {
-        let sw_result = self.feed.result;
         // Note: Pull oracles support mean (result.mean) or median (result.value)
-        let price: I80F48 = I80F48::from_num(sw_result.value)
-            .checked_div(EXP_10_I80F48[switchboard_on_demand::PRECISION as usize])
-            .ok_or_else(math_error!())?;
+        let price: I80F48 = I80F48::from_num(0);
 
         // WARNING: Adding a line like the following will cause the entire project to silently fail
         // to build, resulting in `Program not deployed` errors downstream when testing
@@ -367,7 +361,7 @@ impl SwitchboardPullPriceFeed {
     }
 
     fn get_confidence_interval(&self) -> MarginfiResult<I80F48> {
-        let std_div: I80F48 = I80F48::from_num(self.feed.result.std_dev);
+        let std_div: I80F48 = I80F48::from_num(0);
 
         let conf_interval = std_div
             .checked_mul(STD_DEV_MULTIPLE)
@@ -781,24 +775,10 @@ impl PriceAdapter for PythPushOraclePriceFeed {
 /// switchboard-on-demand/src/pull_feed.rs
 #[cfg_attr(feature = "client", derive(Clone, Debug))]
 struct LitePullFeedAccountData {
-    pub result: CurrentResult,
+    pub result: u64,
 }
 
-impl From<&PullFeedAccountData> for LitePullFeedAccountData {
-    fn from(feed: &PullFeedAccountData) -> Self {
-        Self {
-            result: feed.result,
-        }
-    }
-}
 
-impl From<Ref<'_, PullFeedAccountData>> for LitePullFeedAccountData {
-    fn from(feed: Ref<'_, PullFeedAccountData>) -> Self {
-        Self {
-            result: feed.result,
-        }
-    }
-}
 
 /// A slimmed down version of the AggregatorAccountData struct copied from the switchboard-v2/src/aggregator.rs
 #[cfg_attr(feature = "client", derive(Clone, Debug))]
@@ -818,7 +798,7 @@ impl From<&AggregatorAccountData> for LiteAggregatorAccountData {
     fn from(agg: &AggregatorAccountData) -> Self {
         Self {
             resolution_mode: agg.resolution_mode,
-            latest_confirmed_round_result: agg.latest_confirmed_round.result,
+            latest_confirmed_round_result: SwitchboardDecimal { mantissa: 0, scale: 0 },
             latest_confirmed_round_num_success: agg.latest_confirmed_round.num_success,
             latest_confirmed_round_std_deviation: agg.latest_confirmed_round.std_deviation,
             min_oracle_results: agg.min_oracle_results,

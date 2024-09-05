@@ -2928,7 +2928,6 @@ dependencies = [
  "spl-tlv-account-resolution 0.6.3",
  "spl-transfer-hook-interface 0.6.3",
  "static_assertions",
- "switchboard-on-demand",
  "switchboard-solana",
  "test-case",
  "test-utilities",

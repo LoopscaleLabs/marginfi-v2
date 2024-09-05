@@ -14,7 +14,6 @@ use solana_client::rpc_filter::{Memcmp, RpcFilterType};
 use solana_sdk::account_info::IntoAccountInfo;
 use solana_sdk::pubkey::Pubkey;
 use std::time::{SystemTime, UNIX_EPOCH};
-use switchboard_on_demand::PullFeedAccountData;
 
 pub fn find_pyth_push_oracles_for_feed_id(
     rpc_client: &RpcClient,
@@ -79,29 +78,3 @@ pub fn inspect_pyth_push_feed(config: &Config, address: Pubkey) -> anyhow::Resul
     Ok(())
 }
 
-pub fn inspect_swb_pull_feed(config: &Config, address: Pubkey) -> anyhow::Result<()> {
-    let mut account = config.mfi_program.rpc().get_account(&address)?;
-
-    let ai = (&address, &mut account).into_account_info();
-    let feed = PullFeedAccountData::parse(ai.data.borrow())?;
-
-    let price: I80F48 = I80F48::from_num(feed.result.value)
-        .checked_div(EXP_10_I80F48[switchboard_on_demand::PRECISION as usize])
-        .unwrap();
-
-    let last_updated = feed.last_update_timestamp;
-    let current_timestamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
-    let age = current_timestamp.saturating_sub(last_updated);
-    let datetime: DateTime<Local> = Local.timestamp_opt(last_updated, 0).unwrap();
-
-    println!("price: {}", price);
-    println!(
-        "last updated: {} (ts: {}; slot {})",
-        datetime,
-        last_updated,
-        feed.result.result_slot().unwrap_or(0)
-    );
-    println!("age: {}s", age);
-
-    Ok(())
-}
