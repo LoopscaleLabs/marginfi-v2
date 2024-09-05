@@ -437,7 +437,7 @@ dependencies = [
  "anchor-lang 0.29.0",
  "solana-program",
  "spl-associated-token-account 2.3.0",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-2022 0.9.0",
 ]
 
@@ -450,7 +450,7 @@ dependencies = [
  "anchor-lang 0.30.1",
  "spl-associated-token-account 3.0.2",
  "spl-pod 0.2.2",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-2022 3.0.2",
  "spl-token-group-interface 0.2.3",
  "spl-token-metadata-interface 0.3.3",
@@ -536,12 +536,6 @@ dependencies = [
  "quote",
  "syn 1.0.109",
 ]
-
-[[package]]
-name = "arc-swap"
-version = "1.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69f7f8c3906b62b754cd5326047894316021dcfe5a194c8ea52bdd94934a3457"
 
 [[package]]
 name = "ark-bn254"
@@ -2966,8 +2960,7 @@ dependencies = [
  "solana-client",
  "solana-sdk",
  "spl-associated-token-account 2.3.0",
- "spl-token 4.0.0",
- "switchboard-on-demand",
+ "spl-token",
  "switchboard-solana",
  "type-layout",
 ]
@@ -3348,15 +3341,6 @@ dependencies = [
 
 [[package]]
 name = "num_enum"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1f646caf906c20226733ed5b1374287eb97e3c2a5c227ce668c1f2ce20ae57c9"
-dependencies = [
- "num_enum_derive 0.5.11",
-]
-
-[[package]]
-name = "num_enum"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7a015b430d3c108a207fd776d2e2196aaf8b1cf8cf93253e3a097ff3085076a1"
@@ -3371,18 +3355,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "02339744ee7253741199f897151b38e72257d13802d4ee837285cc2990a90845"
 dependencies = [
  "num_enum_derive 0.7.2",
-]
-
-[[package]]
-name = "num_enum_derive"
-version = "0.5.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcbff9bc912032c62bf65ef1d5aea88983b420f4f839db1e9b0c281a25c9c799"
-dependencies = [
- "proc-macro-crate 1.3.1",
- "proc-macro2",
- "quote",
- "syn 1.0.109",
 ]
 
 [[package]]
@@ -4887,7 +4859,7 @@ dependencies = [
  "serde_json",
  "solana-config-program",
  "solana-sdk",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-2022 1.0.0",
  "spl-token-group-interface 0.1.0",
  "spl-token-metadata-interface 0.2.0",
@@ -5911,7 +5883,7 @@ dependencies = [
  "solana-sdk",
  "spl-associated-token-account 2.3.0",
  "spl-memo",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-2022 1.0.0",
  "thiserror",
 ]
@@ -6083,7 +6055,7 @@ dependencies = [
  "num-derive 0.4.2",
  "num-traits",
  "solana-program",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-2022 1.0.0",
  "thiserror",
 ]
@@ -6099,7 +6071,7 @@ dependencies = [
  "num-derive 0.4.2",
  "num-traits",
  "solana-program",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-2022 3.0.2",
  "thiserror",
 ]
@@ -6303,21 +6275,6 @@ dependencies = [
 
 [[package]]
 name = "spl-token"
-version = "3.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e85e168a785e82564160dcb87b2a8e04cee9bfd1f4d488c729d53d6a4bd300d"
-dependencies = [
- "arrayref",
- "bytemuck",
- "num-derive 0.3.3",
- "num-traits",
- "num_enum 0.5.11",
- "solana-program",
- "thiserror",
-]
-
-[[package]]
-name = "spl-token"
 version = "4.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08459ba1b8f7c1020b4582c4edf0f5c7511a5e099a7a97570c9698d4f2337060"
@@ -6346,7 +6303,7 @@ dependencies = [
  "solana-zk-token-sdk",
  "spl-memo",
  "spl-pod 0.1.0",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-metadata-interface 0.2.0",
  "spl-transfer-hook-interface 0.3.0",
  "spl-type-length-value 0.3.0",
@@ -6369,7 +6326,7 @@ dependencies = [
  "solana-zk-token-sdk",
  "spl-memo",
  "spl-pod 0.1.0",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-group-interface 0.1.0",
  "spl-token-metadata-interface 0.2.0",
  "spl-transfer-hook-interface 0.4.1",
@@ -6393,7 +6350,7 @@ dependencies = [
  "solana-zk-token-sdk",
  "spl-memo",
  "spl-pod 0.2.2",
- "spl-token 4.0.0",
+ "spl-token",
  "spl-token-group-interface 0.2.3",
  "spl-token-metadata-interface 0.3.3",
  "spl-transfer-hook-interface 0.6.3",
@@ -6681,34 +6638,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "switchboard-on-demand"
-version = "0.1.14"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3852951c42f8876a443060b6882bda945f1621224236ead37959e80f5369cf81"
-dependencies = [
- "arc-swap",
- "async-trait",
- "base64 0.21.7",
- "bincode",
- "borsh 0.10.3",
- "bytemuck",
- "futures",
- "lazy_static",
- "libsecp256k1 0.7.1",
- "log",
- "num 0.4.3",
- "rust_decimal",
- "serde",
- "serde_json",
- "sha2 0.10.8",
- "solana-address-lookup-table-program",
- "solana-program",
- "spl-associated-token-account 2.3.0",
- "spl-token 3.5.0",
- "switchboard-common",
-]
-
-[[package]]
 name = "switchboard-solana"
 version = "0.29.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6951,7 +6880,6 @@ dependencies = [
  "spl-token-2022 3.0.2",
  "spl-transfer-hook-interface 0.6.3",
  "static_assertions",
- "switchboard-on-demand",
  "switchboard-solana",
  "test_transfer_hook",
  "type-layout",
