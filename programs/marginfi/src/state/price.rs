@@ -3,12 +3,12 @@ use std::{cell::Ref, cmp::min};
 use anchor_lang::prelude::*;
 use enum_dispatch::enum_dispatch;
 use fixed::types::I80F48;
+pub use pyth_sdk_solana;
 use pyth_sdk_solana::{state::SolanaPriceAccount, Price, PriceFeed};
 use pyth_solana_receiver_sdk::price_update::{self, FeedId, PriceUpdateV2};
 use switchboard_solana::{
     AggregatorAccountData, AggregatorResolutionMode, SwitchboardDecimal, SWITCHBOARD_PROGRAM_ID,
 };
-pub use pyth_sdk_solana;
 
 use crate::{
     check,
@@ -326,12 +326,9 @@ impl SwitchboardPullPriceFeed {
         //     PullFeedAccountData::parse(ai_data).map_err(|_| MarginfiError::InvalidOracleAccount)?;
 
         // Check staleness
-        
 
         Ok(Self {
-            feed: Box::new(LitePullFeedAccountData {
-                result:0
-            }),
+            feed: Box::new(LitePullFeedAccountData { result: 0 }),
         })
     }
 
@@ -537,20 +534,19 @@ pub fn load_price_update_v2_checked(ai: &AccountInfo) -> MarginfiResult<PriceUpd
     // );
 
     Ok(PriceUpdateV2 {
-        write_authority:Pubkey::default(),
+        write_authority: Pubkey::default(),
         posted_slot: 0,
         verification_level: pyth_solana_receiver_sdk::price_update::VerificationLevel::Full,
         price_message: pyth_solana_receiver_sdk::price_update::PriceFeedMessage {
-    feed_id: [0; 32],
-    price: 0,
-    conf: 0,
-    exponent: 0,
-    publish_time: 0,
-    prev_publish_time: 0,
-    ema_price: 0,
-    ema_conf: 0,
-}
-
+            feed_id: [0; 32],
+            price: 0,
+            conf: 0,
+            exponent: 0,
+            publish_time: 0,
+            prev_publish_time: 0,
+            ema_price: 0,
+            ema_conf: 0,
+        },
     })
 }
 
@@ -778,8 +774,6 @@ struct LitePullFeedAccountData {
     pub result: u64,
 }
 
-
-
 /// A slimmed down version of the AggregatorAccountData struct copied from the switchboard-v2/src/aggregator.rs
 #[cfg_attr(feature = "client", derive(Clone, Debug))]
 struct LiteAggregatorAccountData {
@@ -798,7 +792,10 @@ impl From<&AggregatorAccountData> for LiteAggregatorAccountData {
     fn from(agg: &AggregatorAccountData) -> Self {
         Self {
             resolution_mode: agg.resolution_mode,
-            latest_confirmed_round_result: SwitchboardDecimal { mantissa: 0, scale: 0 },
+            latest_confirmed_round_result: SwitchboardDecimal {
+                mantissa: 0,
+                scale: 0,
+            },
             latest_confirmed_round_num_success: agg.latest_confirmed_round.num_success,
             latest_confirmed_round_std_deviation: agg.latest_confirmed_round.std_deviation,
             min_oracle_results: agg.min_oracle_results,

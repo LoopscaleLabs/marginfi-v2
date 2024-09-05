@@ -77,4 +77,3 @@ pub fn inspect_pyth_push_feed(config: &Config, address: Pubkey) -> anyhow::Resul
 
     Ok(())
 }
-

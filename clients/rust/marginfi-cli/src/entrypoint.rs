@@ -465,9 +465,7 @@ pub fn entry(opts: Opts) -> Result<()> {
 
             Ok(())
         }
-        Command::InspectSwbPullFeed { address } => {
-            Ok(())
-        }
+        Command::InspectSwbPullFeed { address } => Ok(()),
     }
 }
 

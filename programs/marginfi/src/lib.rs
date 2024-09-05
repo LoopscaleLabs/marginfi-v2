@@ -14,7 +14,6 @@ use state::marginfi_group::{BankConfigCompact, BankConfigOpt};
 
 declare_id!("MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA");
 
-
 #[program]
 pub mod marginfi {
     use super::*;
