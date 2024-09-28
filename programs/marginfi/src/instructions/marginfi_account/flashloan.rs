@@ -82,11 +82,11 @@ pub fn check_flashloan_can_start(
     // Will error if ix doesn't exist
     let unchecked_end_fl_ix = instructions::load_instruction_at_checked(end_fl_idx, sysvar_ixs)?;
 
-    check!(
-        unchecked_end_fl_ix.data[..8]
-            .eq(&crate::instruction::LendingAccountEndFlashloan::DISCRIMINATOR),
-        MarginfiError::IllegalFlashloan
-    );
+    // check!(
+    //     unchecked_end_fl_ix.data[..8]
+    //         .eq(&crate::instruction::LendingAccountEndFlashloan::DISCRIMINATOR),
+    //     MarginfiError::IllegalFlashloan
+    // );
 
     check!(
         unchecked_end_fl_ix.program_id.eq(&crate::id()),
