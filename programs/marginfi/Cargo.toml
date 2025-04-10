@@ -35,7 +35,6 @@ pyth-sdk-solana = { workspace = true }
 anchor-lang-29 = { workspace = true }
 pyth-solana-receiver-sdk = { workspace = true }
 switchboard-solana = { workspace = true }
-switchboard-on-demand = { workspace = true }
 borsh = "0.10.3"
 
 bytemuck = "1.9.1"

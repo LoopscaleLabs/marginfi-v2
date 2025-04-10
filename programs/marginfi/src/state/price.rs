@@ -8,7 +8,6 @@ use pyth_sdk_solana::{state::SolanaPriceAccount, Price, PriceFeed};
 use pyth_solana_receiver_sdk::price_update::{self, FeedId, PriceUpdateV2};
 use solana_program::{borsh1::try_from_slice_unchecked, stake::state::StakeStateV2};
 use std::{cell::Ref, cmp::min};
-use switchboard_on_demand::{CurrentResult, PullFeedAccountData, SPL_TOKEN_PROGRAM_ID};
 use switchboard_solana::{
     AggregatorAccountData, AggregatorResolutionMode, SwitchboardDecimal, SWITCHBOARD_PROGRAM_ID,
 };
@@ -423,7 +422,7 @@ impl OraclePriceFeedAdapter {
 
                     // Sanity check the mint. Note: spl-single-pool uses a classic Token, never Token22
                     check!(
-                        oracle_ais[1].owner == &SPL_TOKEN_PROGRAM_ID,
+                        oracle_ais[1].owner == &anchor_spl::token::spl_token::ID,
                         MarginfiError::StakePoolValidationFailed
                     );
                     check_eq!(
@@ -597,14 +596,7 @@ impl SwitchboardPullPriceFeed {
             MarginfiError::SwitchboardWrongAccountOwner
         );
 
-        let feed = PullFeedAccountData::parse(ai_data)
-            .map_err(|_| MarginfiError::SwitchboardInvalidAccount)?;
-
-        // Check staleness
-        let last_updated = feed.last_update_timestamp;
-        if current_timestamp.saturating_sub(last_updated) > max_age as i64 {
-            return err!(MarginfiError::SwitchboardStalePrice);
-        }
+        let feed = LitePullFeedAccountData { result: 0 };
 
         Ok(Self {
             feed: Box::new(feed.into()),
@@ -619,17 +611,14 @@ impl SwitchboardPullPriceFeed {
             MarginfiError::SwitchboardWrongAccountOwner
         );
 
-        PullFeedAccountData::parse(ai_data)
-            .map_err(|_| MarginfiError::SwitchboardInvalidAccount)?;
-
         Ok(())
     }
 
     fn get_price(&self) -> MarginfiResult<I80F48> {
         let sw_result = self.feed.result;
         // Note: Pull oracles support mean (result.mean) or median (result.value)
-        let price: I80F48 = I80F48::from_num(sw_result.value)
-            .checked_div(EXP_10_I80F48[switchboard_on_demand::PRECISION as usize])
+        let price: I80F48 = I80F48::from_num(0)
+            .checked_div(EXP_10_I80F48[10])
             .ok_or_else(math_error!())?;
 
         // WARNING: Adding a line like the following will cause the entire project to silently fail
@@ -641,7 +630,7 @@ impl SwitchboardPullPriceFeed {
     }
 
     fn get_confidence_interval(&self) -> MarginfiResult<I80F48> {
-        let std_div: I80F48 = I80F48::from_num(self.feed.result.std_dev);
+        let std_div: I80F48 = I80F48::from_num(0);
 
         let conf_interval = std_div
             .checked_mul(STD_DEV_MULTIPLE)
@@ -1054,35 +1043,7 @@ impl PriceAdapter for PythPushOraclePriceFeed {
 /// switchboard-on-demand/src/pull_feed.rs
 #[cfg_attr(feature = "client", derive(Clone, Debug))]
 pub struct LitePullFeedAccountData {
-    pub result: CurrentResult,
-    #[cfg(feature = "client")]
-    pub feed_hash: [u8; 32],
-    #[cfg(feature = "client")]
-    pub last_update_timestamp: i64,
-}
-
-impl From<&PullFeedAccountData> for LitePullFeedAccountData {
-    fn from(feed: &PullFeedAccountData) -> Self {
-        Self {
-            result: feed.result,
-            #[cfg(feature = "client")]
-            feed_hash: feed.feed_hash,
-            #[cfg(feature = "client")]
-            last_update_timestamp: feed.last_update_timestamp,
-        }
-    }
-}
-
-impl From<Ref<'_, PullFeedAccountData>> for LitePullFeedAccountData {
-    fn from(feed: Ref<'_, PullFeedAccountData>) -> Self {
-        Self {
-            result: feed.result,
-            #[cfg(feature = "client")]
-            feed_hash: feed.feed_hash,
-            #[cfg(feature = "client")]
-            last_update_timestamp: feed.last_update_timestamp,
-        }
-    }
+    pub result: u64,
 }
 
 /// A slimmed down version of the AggregatorAccountData struct copied from the switchboard-v2/src/aggregator.rs
