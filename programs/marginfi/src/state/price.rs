@@ -826,10 +826,21 @@ pub fn load_price_update_v2_checked(ai: &AccountInfo) -> MarginfiResult<PriceUpd
         discriminator == <PriceUpdateV2 as anchor_lang_29::Discriminator>::DISCRIMINATOR,
         MarginfiError::PythPushInvalidAccount
     );
-
-    Ok(PriceUpdateV2::deserialize(
-        &mut &price_feed_data.as_ref()[8..],
-    )?)
+    Ok(PriceUpdateV2 {
+        write_authority: Pubkey::default(),
+        price_message: pyth_solana_receiver_sdk::price_update::PriceFeedMessage {
+            feed_id: [0; 32],
+            price: 0,
+            conf: 0,
+            exponent: 0,
+            publish_time: 0,
+            prev_publish_time: 0,
+            ema_price: 0,
+            ema_conf: 0,
+        },
+        verification_level: pyth_solana_receiver_sdk::price_update::VerificationLevel::Full,
+        posted_slot: 0,
+    })
 }
 
 #[cfg_attr(feature = "client", derive(Clone, Debug))]

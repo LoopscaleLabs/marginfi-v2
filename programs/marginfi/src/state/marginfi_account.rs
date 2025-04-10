@@ -833,7 +833,16 @@ assert_struct_size!(Balance, 104);
 assert_struct_align!(Balance, 8);
 #[repr(C)]
 #[derive(
-    AnchorDeserialize, AnchorSerialize, Copy, Clone, Zeroable, Pod, PartialEq, Eq, TypeLayout,
+    AnchorDeserialize,
+    AnchorSerialize,
+    Copy,
+    Clone,
+    Zeroable,
+    Pod,
+    PartialEq,
+    Eq,
+    TypeLayout,
+    Default,
 )]
 pub struct Balance {
     pub active: u8,
