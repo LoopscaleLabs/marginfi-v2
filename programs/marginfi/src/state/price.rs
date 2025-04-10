@@ -811,10 +811,6 @@ pub fn load_price_update_v2_checked(ai: &AccountInfo) -> MarginfiResult<PriceUpd
     let price_feed_data = ai.try_borrow_data()?;
     let discriminator = &price_feed_data[0..8];
 
-    check!(
-        discriminator == <PriceUpdateV2 as anchor_lang_29::Discriminator>::DISCRIMINATOR,
-        MarginfiError::PythPushInvalidAccount
-    );
     Ok(PriceUpdateV2 {
         write_authority: Pubkey::default(),
         price_message: pyth_solana_receiver_sdk::price_update::PriceFeedMessage {
