@@ -12,7 +12,11 @@ use instructions::*;
 use prelude::*;
 use state::marginfi_group::{BankConfigCompact, BankConfigOpt};
 
+#[cfg(not(feature = "sandbox"))]
 declare_id!("MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA");
+
+#[cfg(feature = "sandbox")]
+declare_id!("stag8sTKds2h4KzjUw3zKTsxbqvT4XKHdaR9X9E6Rct");
 
 #[program]
 pub mod marginfi {

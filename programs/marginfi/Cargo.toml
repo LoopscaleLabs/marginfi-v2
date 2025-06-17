@@ -21,7 +21,9 @@ client = []
 devnet = []
 mainnet-beta = []
 debug = []
+prod = []
 staging = []
+sandbox = []
 
 [dependencies]
 solana-program = { workspace = true }
