@@ -32,7 +32,6 @@ anchor-lang = { workspace = true }
 anchor-spl = { workspace = true }
 
 pyth-sdk-solana = { workspace = true }
-anchor-lang-29 = { workspace = true }
 pyth-solana-receiver-sdk = { workspace = true }
 switchboard-solana = { workspace = true }
 borsh = "0.10.3"
