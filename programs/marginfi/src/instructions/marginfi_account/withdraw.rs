@@ -35,7 +35,7 @@ pub fn lending_account_withdraw<'info>(
         bank: bank_loader,
         ..
     } = ctx.accounts;
-    let clock = Clock::get()?;
+    let clock = Clock::get().map_err(|_| MarginfiError::MathError)?;
 
     let withdraw_all = withdraw_all.unwrap_or(false);
     let mut marginfi_account = marginfi_account_loader.load_mut()?;

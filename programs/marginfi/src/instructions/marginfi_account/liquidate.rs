@@ -99,7 +99,7 @@ pub fn lending_account_liquidate<'info>(
 
     let mut liquidator_marginfi_account = liquidator_marginfi_account_loader.load_mut()?;
     let mut liquidatee_marginfi_account = liquidatee_marginfi_account_loader.load_mut()?;
-    let clock = Clock::get()?;
+    let clock = Clock::get().map_err(|_| MarginfiError::MathError)?;
     let current_timestamp = clock.unix_timestamp;
 
     let maybe_liab_bank_mint = utils::maybe_take_bank_mint(
