@@ -38,7 +38,7 @@ pub fn lending_account_borrow<'info>(
         group: marginfi_group_loader,
         ..
     } = ctx.accounts;
-    let clock = Clock::get()?;
+    let clock = Clock::get().map_err(|_| MarginfiError::MathError)?;
     let maybe_bank_mint = utils::maybe_take_bank_mint(
         &mut ctx.remaining_accounts,
         &*bank_loader.load()?,
