@@ -1,4 +1,4 @@
-use crate::{prelude::*, state::marginfi_group::BankConfigOpt};
+use crate::{state::marginfi_group::BankConfigOpt, StakedSettingsEditConfig};
 use anchor_lang::prelude::*;
 
 // Event headers
@@ -27,7 +27,8 @@ pub struct MarginfiGroupCreateEvent {
 #[event]
 pub struct MarginfiGroupConfigureEvent {
     pub header: GroupEventHeader,
-    pub config: GroupConfig,
+    pub admin: Pubkey,
+    pub flags: u64,
 }
 
 #[event]
@@ -43,6 +44,29 @@ pub struct LendingPoolBankConfigureEvent {
     pub bank: Pubkey,
     pub mint: Pubkey,
     pub config: BankConfigOpt,
+}
+
+#[event]
+pub struct LendingPoolBankConfigureOracleEvent {
+    pub header: GroupEventHeader,
+    pub bank: Pubkey,
+    pub oracle_setup: u8,
+    pub oracle: Pubkey,
+}
+
+#[event]
+pub struct LendingPoolBankConfigureFrozenEvent {
+    pub header: GroupEventHeader,
+    pub bank: Pubkey,
+    pub mint: Pubkey,
+    pub deposit_limit: u64,
+    pub borrow_limit: u64,
+}
+
+#[event]
+pub struct EditStakedSettingsEvent {
+    pub group: Pubkey,
+    pub settings: StakedSettingsEditConfig,
 }
 
 #[event]

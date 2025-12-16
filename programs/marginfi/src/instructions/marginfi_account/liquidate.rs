@@ -2,9 +2,12 @@ use crate::constants::{
     INSURANCE_VAULT_SEED, LIQUIDATION_INSURANCE_FEE, LIQUIDATION_LIQUIDATOR_FEE,
 };
 use crate::events::{AccountEventHeader, LendingAccountLiquidateEvent, LiquidationBalances};
-use crate::state::marginfi_account::{calc_amount, calc_value, RiskEngine};
+use crate::state::marginfi_account::{
+    calc_amount, calc_value, get_remaining_accounts_per_bank, RiskEngine,
+};
 use crate::state::marginfi_group::{Bank, BankVaultType};
 use crate::state::price::{OraclePriceFeedAdapter, OraclePriceType, PriceAdapter, PriceBias};
+use crate::utils::{validate_asset_tags, validate_bank_asset_tags};
 use crate::{
     bank_signer,
     constants::{LIQUIDITY_VAULT_AUTHORITY_SEED, LIQUIDITY_VAULT_SEED},
@@ -79,21 +82,36 @@ pub fn lending_account_liquidate<'info>(
     mut ctx: Context<'_, '_, 'info, 'info, LendingAccountLiquidate<'info>>,
     asset_amount: u64,
 ) -> MarginfiResult {
-    check!(
-        asset_amount > 0,
-        MarginfiError::IllegalLiquidation,
-        "Asset amount must be positive"
-    );
+    check!(asset_amount > 0, MarginfiError::ZeroLiquidationAmount);
 
     check!(
         ctx.accounts.asset_bank.key() != ctx.accounts.liab_bank.key(),
-        MarginfiError::IllegalLiquidation,
-        "Asset and liability bank cannot be the same"
+        MarginfiError::SameAssetAndLiabilityBanks
     );
+
+    // Liquidators must repay debts in allowed asset types. A SOL debt can be repaid in any asset. A
+    // Staked Collateral debt must be repaid in SOL or staked collateral. A Default asset debt can
+    // be repaid in any Default asset or SOL.
+    {
+        let asset_bank = ctx.accounts.asset_bank.load()?;
+        let liab_bank = ctx.accounts.liab_bank.load()?;
+        validate_bank_asset_tags(&asset_bank, &liab_bank)?;
+
+        // Sanity check user/liquidator accounts will not contain positions with mismatching tags
+        // after liquidation.
+        // * Note: user will be repaid in liab_bank
+        let user_acc = ctx.accounts.liquidatee_marginfi_account.load()?;
+        validate_asset_tags(&liab_bank, &user_acc)?;
+        // * Note: Liquidator repays liab bank, and is paid in asset_bank.
+        let liquidator_acc = ctx.accounts.liquidator_marginfi_account.load()?;
+        validate_asset_tags(&liab_bank, &liquidator_acc)?;
+        validate_asset_tags(&asset_bank, &liquidator_acc)?;
+    } // release immutable borrow of asset_bank/liab_bank + liquidatee/liquidator user accounts
 
     let LendingAccountLiquidate {
         liquidator_marginfi_account: liquidator_marginfi_account_loader,
         liquidatee_marginfi_account: liquidatee_marginfi_account_loader,
+        group: marginfi_group_loader,
         ..
     } = ctx.accounts;
 
@@ -108,27 +126,32 @@ pub fn lending_account_liquidate<'info>(
         ctx.accounts.token_program.key,
     )?;
     {
+        let group = &*marginfi_group_loader.load()?;
         ctx.accounts.asset_bank.load_mut()?.accrue_interest(
             current_timestamp,
+            group,
             #[cfg(not(feature = "client"))]
             ctx.accounts.asset_bank.key(),
         )?;
         ctx.accounts.liab_bank.load_mut()?.accrue_interest(
             current_timestamp,
+            group,
             #[cfg(not(feature = "client"))]
             ctx.accounts.liab_bank.key(),
         )?;
     }
-    let init_liquidatee_remaining_len = liquidatee_marginfi_account.get_remaining_accounts_len();
-    let pre_liquidation_health = {
-        let liquidatee_accounts_starting_pos =
-            ctx.remaining_accounts.len() - init_liquidatee_remaining_len;
-        let liquidatee_remaining_accounts =
-            &ctx.remaining_accounts[liquidatee_accounts_starting_pos..];
 
+    let init_liquidatee_remaining_len = liquidatee_marginfi_account.get_remaining_accounts_len()?;
+
+    let liquidatee_accounts_starting_pos =
+        ctx.remaining_accounts.len() - init_liquidatee_remaining_len;
+    let liquidatee_remaining_accounts = &ctx.remaining_accounts[liquidatee_accounts_starting_pos..];
+
+    let pre_liquidation_health =
         RiskEngine::new(&liquidatee_marginfi_account, liquidatee_remaining_accounts)?
-            .check_pre_liquidation_condition_and_get_account_health(&ctx.accounts.liab_bank.key())?
-    };
+            .check_pre_liquidation_condition_and_get_account_health(
+                &ctx.accounts.liab_bank.key(),
+            )?;
 
     // ##Accounting changes##
 
@@ -136,8 +159,10 @@ pub fn lending_account_liquidate<'info>(
         let asset_amount = I80F48::from_num(asset_amount);
 
         let mut asset_bank = ctx.accounts.asset_bank.load_mut()?;
+        let asset_bank_remaining_accounts_len = get_remaining_accounts_per_bank(&asset_bank)? - 1;
+
         let asset_price = {
-            let oracle_ais = &ctx.remaining_accounts[0..1];
+            let oracle_ais = &ctx.remaining_accounts[0..asset_bank_remaining_accounts_len];
             let asset_pf = OraclePriceFeedAdapter::try_from_bank_config(
                 &asset_bank.config,
                 oracle_ais,
@@ -147,8 +172,10 @@ pub fn lending_account_liquidate<'info>(
         };
 
         let mut liab_bank = ctx.accounts.liab_bank.load_mut()?;
+        let liab_bank_remaining_accounts_len = get_remaining_accounts_per_bank(&liab_bank)? - 1;
         let liab_price = {
-            let oracle_ais = &ctx.remaining_accounts[1..2];
+            let oracle_ais = &ctx.remaining_accounts[asset_bank_remaining_accounts_len
+                ..(asset_bank_remaining_accounts_len + liab_bank_remaining_accounts_len)];
             let liab_pf = OraclePriceFeedAdapter::try_from_bank_config(
                 &liab_bank.config,
                 oracle_ais,
@@ -232,7 +259,7 @@ pub fn lending_account_liquidate<'info>(
 
             bank_account
                 .withdraw(asset_amount)
-                .map_err(|_| MarginfiError::IllegalLiquidation)?;
+                .map_err(|_| MarginfiError::OverliquidationAttempt)?;
 
             let post_balance = bank_account
                 .bank
@@ -340,12 +367,10 @@ pub fn lending_account_liquidate<'info>(
 
     // ## Risk checks ##
 
-    let liquidatee_accounts_starting_pos =
-        ctx.remaining_accounts.len() - init_liquidatee_remaining_len;
+    let liquidator_remaining_acc_len = liquidator_marginfi_account.get_remaining_accounts_len()?;
     let liquidator_accounts_starting_pos =
-        liquidatee_accounts_starting_pos - liquidator_marginfi_account.get_remaining_accounts_len();
+        liquidatee_accounts_starting_pos - liquidator_remaining_acc_len;
 
-    let liquidatee_remaining_accounts = &ctx.remaining_accounts[liquidatee_accounts_starting_pos..];
     let liquidator_remaining_accounts =
         &ctx.remaining_accounts[liquidator_accounts_starting_pos..liquidatee_accounts_starting_pos];
 
@@ -357,18 +382,21 @@ pub fn lending_account_liquidate<'info>(
                 pre_liquidation_health,
             )?;
 
+    // TODO consider if health cache update here is worth blowing the extra CU
+
     // Verify liquidator account health
     RiskEngine::check_account_init_health(
         &liquidator_marginfi_account,
         liquidator_remaining_accounts,
+        &mut None,
     )?;
 
     emit!(LendingAccountLiquidateEvent {
         header: AccountEventHeader {
-            signer: Some(ctx.accounts.signer.key()),
+            signer: Some(ctx.accounts.authority.key()),
             marginfi_account: liquidator_marginfi_account_loader.key(),
             marginfi_account_authority: liquidator_marginfi_account.authority,
-            marginfi_group: ctx.accounts.marginfi_group.key(),
+            marginfi_group: ctx.accounts.group.key(),
         },
         liquidatee_marginfi_account: liquidatee_marginfi_account_loader.key(),
         liquidatee_marginfi_account_authority: liquidatee_marginfi_account.authority,
@@ -387,34 +415,32 @@ pub fn lending_account_liquidate<'info>(
 
 #[derive(Accounts)]
 pub struct LendingAccountLiquidate<'info> {
-    pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
+    pub group: AccountLoader<'info, MarginfiGroup>,
 
     #[account(
         mut,
-        constraint = asset_bank.load()?.group == marginfi_group.key()
+        has_one = group
     )]
     pub asset_bank: AccountLoader<'info, Bank>,
 
     #[account(
         mut,
-        constraint = liab_bank.load()?.group == marginfi_group.key()
+        has_one = group
     )]
     pub liab_bank: AccountLoader<'info, Bank>,
 
     #[account(
         mut,
-        constraint = liquidator_marginfi_account.load()?.group == marginfi_group.key()
+        has_one = group,
+        has_one = authority
     )]
     pub liquidator_marginfi_account: AccountLoader<'info, MarginfiAccount>,
 
-    #[account(
-        address = liquidator_marginfi_account.load()?.authority
-    )]
-    pub signer: Signer<'info>,
+    pub authority: Signer<'info>,
 
     #[account(
         mut,
-        constraint = liquidatee_marginfi_account.load()?.group == marginfi_group.key()
+        has_one = group
     )]
     pub liquidatee_marginfi_account: AccountLoader<'info, MarginfiAccount>,
 
