@@ -139,6 +139,7 @@ pub fn lending_account_withdraw<'info>(
 
 #[derive(Accounts)]
 pub struct LendingAccountWithdraw<'info> {
+    #[account(mut)]
     pub group: AccountLoader<'info, MarginfiGroup>,
 
     #[account(
